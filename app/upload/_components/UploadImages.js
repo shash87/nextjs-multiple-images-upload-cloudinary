@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { UploadIcon } from "@radix-ui/react-icons";
 import React, {useState} from "react";
+import axios from 'axios';
 
-const UploadImages = () => {
-    const [files, setFiles] = useState([]);
+const UploadImages = ({files, setFiles}) => {
+    // const [files, setFiles] = useState([]);
 
 //   const handleFileChange = (e) => {
 //     const files = e.target.files;
@@ -20,9 +21,50 @@ const UploadImages = () => {
     setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
   };
 
-  const handleDelete = (index) => {
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  const uploadFile = (fileObj, index) => {
+    const formData = new FormData();
+    formData.append('file', fileObj.file);
+
+    axios
+      .post('/api/upload', formData, {
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+
+          setFiles((prevFiles) => {
+            const newFiles = [...prevFiles];
+            newFiles[index].progress = progress;
+            return newFiles;
+          });
+        },
+      })
+      .then((response) => {
+        setFiles((prevFiles) => {
+          const newFiles = [...prevFiles];
+          newFiles[index].uploaded = true;
+          newFiles[index].url = response.data.url;
+          return newFiles;
+        });
+      })
+      .catch(() => {
+        setFiles((prevFiles) => {
+          const newFiles = [...prevFiles];
+          newFiles[index].error = true;
+          return newFiles;
+        });
+      });
   };
+
+  const handleUpload = () => {
+    files.forEach((fileObj, index) => {
+      if (!fileObj.uploaded && !fileObj.error) {
+        uploadFile(fileObj, index);
+      }
+    });
+  };
+
+ 
 
   return (
     <div className="w-full flex flex-col gap-3">
@@ -62,36 +104,9 @@ const UploadImages = () => {
         className="hidden"
       />
     </label>
-    <Button><UploadIcon/> Upload Images</Button>
+    <Button  onClick={handleUpload}><UploadIcon/> Upload Images</Button>
 
-    {files.map((fileObj, index) => (
-        <div key={index} className="mt-4 p-4 border rounded">
-          <div className="flex items-center justify-between">
-            <div>{fileObj.file.name}</div>
-            <button
-              onClick={() => handleDelete(index)}
-              className="text-red-500"
-            >
-              Delete
-            </button>
-          </div>
-          <div className="w-full bg-gray-200 h-2 mt-2 rounded">
-            <div
-              className={`h-2 rounded ${
-                fileObj.error
-                  ? 'bg-red-500'
-                  : fileObj.uploaded
-                  ? 'bg-green-500'
-                  : 'bg-blue-500'
-              }`}
-              style={{ width: `${fileObj.progress}%` }}
-            ></div>
-          </div>
-          {fileObj.error && (
-            <div className="text-red-500 mt-2">Upload failed.</div>
-          )}
-        </div>
-      ))}
+    
     </div>
   );
 };

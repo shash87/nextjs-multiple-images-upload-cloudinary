@@ -1,13 +1,15 @@
 "use client";
 import { useSession } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation';
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import HeaderTitle from './_components/HeaderTitle';
 import UploadImages from './_components/UploadImages';
+import MyImages from './_components/MyImages';
 
 
 
 const Upload = () => {
+    const [files, setFiles] = useState([]);
     const { session } = useSession()
     const router = useRouter()
 
@@ -22,12 +24,13 @@ const Upload = () => {
        <HeaderTitle />
        <div className='mx-auto max-w-screen-xl flex gap-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8 flex-col md:flex-row lg:flex-row'>
             <div className='w-full lg:w-1/2 md:w-1/2'>
-                <UploadImages />
+                <UploadImages files={files} setFiles={setFiles} />
             </div>
             <div className='w-full lg:w-1/2 md:w-1/2'>
                 <div className='bg-white p-4 rounded-md'>
                     <h2 className='text-2xl font-bold text-gray-900'>Uploaded Images</h2>
                     <p className='mt-1.5 text-sm text-gray-500'>Images uploaded will be displayed here</p>
+                    <MyImages files={files} setFiles={setFiles} />
                 </div>
             </div>
        </div>
